@@ -23,8 +23,13 @@
                 </ul>
                 <ul class="navbar-nav ml-auto">
                     {% if current_user.is_authenticated %}
-                    <li class="nav-item">
-                        <a href="{{ url_for('auth.logout') }}" class="nav-link">Log Out</a>
+                    <li class="nav-item dropdown dropleft">
+                        <a href="" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Account</a>
+                        <div class="dropdown-menu">
+                            <a href="{{ url_for('auth.logout') }}" class="dropdown-item">Log Out</a>
+                            <a href="{{ url_for('auth.change_password') }}" class="dropdown-item">Change Password</a>
+                            <a href="{{ url_for('auth.change_email_request') }}" class="dropdown-item">Change Email</a>
+                        </div>
                     </li>
                     {% else %}
                     <li class="nav-item">

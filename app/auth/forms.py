@@ -32,11 +32,33 @@ class RegistrationForm(FlaskForm):
             raise ValidationError('Username already in use.')
 
 
-class UpdatePasswordForm(FlaskForm):
-    password = PasswordField('Password', validators=[DataRequired()])
-    new_password = PasswordField('New password', validators=[DataRequired()])
+class ChangePasswordForm(FlaskForm):
+    old_password = PasswordField('Password', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired(), EqualTo('password2', message='Password must match.')])
+    password2 = PasswordField('New password', validators=[DataRequired()])
     submit = SubmitField('Update')
 
-    def validate_password(self, field):
-        if not current_user.verify_password(field.data):
-            raise ValidationError('Wrong password.')
+
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField('New Password', validators=[DataRequired()])
+    new_password = PasswordField('Confirm New Password', validators=[DataRequired()])
+    submit = SubmitField('Update')
+
+
+class ResetPasswordRequestForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Length(1, 64), Email()])
+    submit = SubmitField('Reset')
+
+    def validate_email(self, field):
+        if User.query.filter_by(email=field.data).first() is None:
+            raise ValidationError('This email is not registered.')
+
+
+class ChangeEmailForm(FlaskForm):
+    new_email = StringField('Email', validators=[DataRequired(), Length(1, 64), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Change')
+
+    def validate_new_email(self, field):
+        if User.query.filter_by(email=field.data).first():
+            raise ValidationError('Email already registered.')

@@ -1,10 +1,21 @@
 import unittest
 import time
 from app.models import User
-from app import db
+from app import db, create_app
 
 
 class UserModelTestCase(unittest.TestCase):
+    def setUp(self):
+        self.app = create_app('testing')
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+        db.create_all()
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        self.app_context.pop()
+
     def test_password_setter(self):
         u = User(password='cat')
         self.assertTrue(u.password_hash is not None)
@@ -48,8 +59,32 @@ class UserModelTestCase(unittest.TestCase):
         time.sleep(2)
         self.assertFalse(u.confirm(token))
     
-    def test_update_password(self):
+    def test_change_password(self):
         u = User(password='cat')
-        u.update_password('dog')
+        u.change_password('dog')
         db.session.commit()
         self.assertTrue(u.verify_password('dog'))
+
+    def teset_valid_reset_token(self):
+        u = User(password='cat')
+        db.session.add(u)
+        db.session.commit()
+        token = u.generate_reset_token()
+        self.assertTrue(User.reset_password(token, 'dog'))
+        self.assertTrue(u.verify_password('dog'))
+    
+    def test_invalid_reset_token(self):
+        u = User(password='cat')
+        db.session.add(u)
+        db.session.commit()
+        token = u.generate_reset_token()
+        self.assertFalse(User.reset_password(token + 'a', 'dog'))
+        self.assertTrue(u.verify_password('cat'))
+    
+    def test_valid_change_email_token(self):
+        u = User(email='cat@gmail.com', password='cat')
+        db.session.add(u)
+        db.session.commit()
+        token = u.generate_change_email_token(new_email='dog@gmail.com')
+        self.assertTrue(u.change_email(token))
+        self.assertTrue(u.email == 'dog@gmail.com')
